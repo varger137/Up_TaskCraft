@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Задача</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Информация о задаче</h1>
+        <div id="taskInfo" class="card"></div>
+        <div class="nav-buttons">
+            <button id="backToTasksButton">Назад к списку задач</button>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:5194';
+        const token = localStorage.getItem('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskId = urlParams.get('taskId');
+        const projectId = urlParams.get('projectId');
+
+        if (!token) {
+            alert('Сначала войдите в систему');
+            window.location.href = '../UserFr/login_user.html';
+        }
+
+
+        const backToTasksButton = document.getElementById('backToTasksButton');
+        if (projectId) {
+            backToTasksButton.setAttribute(
+                'onclick', 
+                `window.location.href='get_all_tasks.html?projectId=${projectId}'`
+            );
+        } else {
+            alert('Ошибка: ID проекта не найден');
+        }
+
+        async function loadTask() {
+            const response = await fetch(`${baseUrl}/projects/${projectId}/tasks/${taskId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskInfo = document.getElementById('taskInfo');
+
+                taskInfo.innerHTML = `
+                    <h2>${task.title}</h2>
+                    <p>${task.description || 'Нет описания'}</p>
+                    <p>Статус: ${task.status}</p>
+                    <p>Создана: ${new Date(task.createdAt).toLocaleDateString()}</p>
+                    <p>Назначение от: ${task.assignedUserNickName}</p>
+                `;
+
+
+            } else {
+                alert('Ошибка при загрузке задачи');
+            }
+        }
+
+        loadTask();
+    </script>
+</body>
+</html>

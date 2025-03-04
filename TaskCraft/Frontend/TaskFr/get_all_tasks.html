@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список задач</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Список задач</h1>
+        <div id="tasksList"></div>
+        <div class="nav-buttons">
+            <button id="createTaskButton">Создать задачу</button>
+            
+            <p><button id="goToProjectButton">К проекту</button></p>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:5194';
+        const token = localStorage.getItem('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('projectId');
+
+        if (!token) {
+            alert('Сначала войдите в систему');
+            window.location.href = '../UserFr/login_user.html';
+        }
+
+        // Функция для обновления ссылок в кнопках
+        function updateButtons() {
+            const createTaskButton = document.getElementById('createTaskButton');
+            const goToProjectButton = document.getElementById('goToProjectButton');
+
+            if (projectId) {
+                createTaskButton.setAttribute(
+                    'onclick', 
+                    `window.location.href='create_task.html?projectId=${projectId}'`
+                );
+                goToProjectButton.setAttribute(
+                    'onclick', 
+                    `window.location.href='../ProjectFr/get_project.html?id=${projectId}'`
+                );
+            } else {
+                alert('Ошибка: ID проекта не найден');
+            }
+        }
+
+        async function loadTasks() {
+            const response = await fetch(`${baseUrl}/projects/${projectId}/tasks`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const tasks = await response.json();
+                const tasksList = document.getElementById('tasksList');
+
+                if (tasks.length === 0) {
+                    tasksList.innerHTML = '<p>Задач пока нет</p>';
+                    return;
+                }
+
+                tasks.forEach(task => {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.innerHTML = `
+                        <h3>${task.title}</h3>
+                        <p>${task.description || 'Нет описания'}</p>
+                        <p>Статус: ${task.status}</p>
+                        <button onclick="window.location.href='get_task.html?taskId=${task.id}&projectId=${projectId}'">Подробнее</button>
+                        <button onclick="window.location.href='update_task.html?taskId=${task.id}&projectId=${projectId}'">Изменить</button>
+                        <button onclick="deleteTask('${task.id}')">Удалить</button>
+                        <hr>
+                    `;
+                    tasksList.appendChild(taskDiv);
+                });
+            } else {
+                alert('Ошибка при загрузке задач');
+            }
+        }
+
+        async function deleteTask(taskId) {
+            if (confirm("Вы уверены, что хотите удалить эту задача?")) {
+                const response = await fetch(`${baseUrl}/projects/${projectId}/tasks/delete/${taskId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    alert('Задача успешно удалена');
+                    loadTasks();
+                } else {
+                    const status = await response.status();
+                    alert(`Ошибка: ${status}`);
+                }
+            }
+        }
+
+
+        updateButtons();
+        loadTasks();
+    </script>
+</body>
+</html>

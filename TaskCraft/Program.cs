@@ -9,12 +9,14 @@ using TaskCraft.DTOs;
 using System.Net.WebSockets;
 using Infrastructure.Auth;
 using System.Text;
-
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Collections.Concurrent;
 
 #region Builder
 var builder = WebApplication.CreateBuilder();
 
-
+builder.Services.AddCors();
 builder.Services.AddAutoMapper(typeof(Program));
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -42,7 +44,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 #region Apps
 
 var app = builder.Build();
-
+app.UseCors(o => o.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 app.UseWebSockets();
 
 app.UseAuthentication();

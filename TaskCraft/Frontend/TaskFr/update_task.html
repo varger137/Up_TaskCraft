@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Изменить задачу</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Изменить задачу</h1>
+        <form id="updateTaskForm">
+            <label for="title">Название:</label>
+            <input type="text" id="title" required>
+            <label for="description">Описание:</label>
+            <textarea id="description"></textarea>
+            <label for="status">Статус:</label>
+            <select id="status">
+                <option value="В процессе">В процессе</option>
+                <option value="Завершено">Завершено</option>
+            </select>
+            <div class="nav-buttons">
+                <button type="submit">Сохранить изменения</button>
+                <button id="backToTasksButton">Отмена</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:5194';
+        const token = localStorage.getItem('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskId = urlParams.get('taskId');
+        const projectId = urlParams.get('projectId');
+
+        if (!token) {
+            alert('Сначала войдите в систему');
+            window.location.href = '../UserFr/login_user.html';
+        }
+
+        const backToTasksButton = document.getElementById('backToTasksButton');
+        if (projectId) {
+            backToTasksButton.setAttribute(
+                'onclick', 
+                `window.location.href='get_all_tasks.html?projectId=${projectId}'`
+            );
+        } else {
+            alert('Ошибка: ID проекта не найден');
+        }
+
+        async function loadTask() {
+            const response = await fetch(`${baseUrl}/projects/${projectId}/tasks/${taskId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                document.getElementById('title').value = task.title;
+                document.getElementById('description').value = task.description || '';
+                document.getElementById('status').value = task.status;
+            } else {
+                alert('Ошибка при загрузке задачи');
+            }
+        }
+
+        document.getElementById('updateTaskForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const taskData = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                status: document.getElementById('status').value
+            };
+
+            const response = await fetch(`${baseUrl}/projects/${projectId}/tasks/put/${taskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(taskData)
+            });
+
+            if (response.ok) {
+                alert('Задача успешно обновлена!');
+                window.location.href = `get_task.html?taskId=${taskId}&projectId=${projectId}`;
+            } else {
+                const error = await response.text();
+                alert(`Ошибка: ${error}`);
+            }
+        });
+
+        loadTask();
+    </script>
+</body>
+</html>

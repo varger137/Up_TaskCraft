@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать проект</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Редактирование проекта</h1>
+        <form id="updateProjectForm">
+            <label for="name">Название:</label>
+            <input type="text" id="name" required>
+            <label for="description">Описание:</label>
+            <textarea id="description"></textarea>
+            <div class="nav-buttons">
+                <button type="submit">Сохранить изменения</button>
+                <button onclick="window.location.href='get_project.html?id=${projectId}'">Назад к проекту</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:5194';
+        const token = localStorage.getItem('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('id');
+
+        if (!token) {
+            alert('Сначала войдите в систему');
+            window.location.href = '../UserFr/login_user.html';
+        }
+        
+        document.querySelector('button[onclick*="get_project.html"]')
+        .setAttribute('onclick', `window.location.href='get_project.html?id=${projectId}'`);
+
+
+
+        async function loadProject() {
+            const response = await fetch(`${baseUrl}/projects/${projectId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const project = await response.json();
+                document.getElementById('name').value = project.name;
+                document.getElementById('description').value = project.description || '';
+            } else {
+                alert('Ошибка при загрузке проекта');
+            }
+        }
+
+
+        document.getElementById('updateProjectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const projectData = {
+                name: document.getElementById('name').value,
+                description: document.getElementById('description').value
+            };
+
+            const response = await fetch(`${baseUrl}/projects/put/${projectId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(projectData)
+            });
+
+            if (response.ok) {
+                alert('Проект успешно обновлен!');
+                window.location.href = `get_project.html?id=${projectId}`;
+            } else {
+
+                const statusCode = response.status;
+                alert(`Ошибка ${statusCode}`);
+            }
+        });
+
+        loadProject();
+    </script>
+</body>
+</html>

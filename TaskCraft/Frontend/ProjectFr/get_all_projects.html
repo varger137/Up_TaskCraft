@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Все проекты</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Список всех проектов</h1>
+        <div id="projectsList"></div>
+        <div class="nav-buttons">
+            <button onclick="window.location.href='create_project.html'">Создать новый проект</button>
+        </div>
+        <br>
+        <div>
+       
+            <input type="text" id="projectIdInput" placeholder="Введите ID проекта">
+            <button id="joinProjectButton">Присоединиться к проекту</button>
+            
+            <p><button onclick="window.location.href='../UserFr/get_account.html'">Вернуться в профиль</button></p>
+            
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:5194';
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            alert('Сначала войдите в систему');
+            window.location.href = '../UserFr/login_user.html';
+        }
+
+        async function loadProjects() {
+            const response = await fetch(`${baseUrl}/projects`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 403) {
+                alert('У вас нет доступа к этому проекту');
+                return;
+            }
+
+            if (response.ok) {
+                const projects = await response.json();
+                const projectsList = document.getElementById('projectsList');
+                
+                if (projects.length === 0) {
+                    projectsList.innerHTML = '<p>Вы пока не участвуете ни в одном проекте</p>';
+                    return;
+                }
+                
+                projects.forEach(project => {
+                    const projectDiv = document.createElement('div');
+                    projectDiv.innerHTML = `
+                        <h3>${project.name}</h3>
+                        <p>${project.description || 'Нет описания'}</p>
+                        <button onclick="window.location.href='get_project.html?id=${project.id}'">Подробнее</button>
+                        <hr>
+                    `;
+                    projectsList.appendChild(projectDiv);
+                });
+            } else {
+                alert('Ошибка при загрузке проектов');
+            }
+        }
+
+        document.getElementById('joinProjectButton').addEventListener('click', async () => {
+            const projectId = document.getElementById('projectIdInput').value;
+            if (!projectId) {
+                alert('Введите ID проекта');
+                return;
+            }
+
+            const response = await fetch(`${baseUrl}/projects/${projectId}/join`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                alert('Вы успешно присоединились к проекту!');
+                loadProjects(); 
+            } else {
+                const statusCode = response.status;
+                alert(`Ошибка ${statusCode}`);
+            }
+        });
+
+        loadProjects();
+    </script>
+</body>
+</html>

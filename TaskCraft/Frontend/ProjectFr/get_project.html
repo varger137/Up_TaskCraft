@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проект</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="container">
+    <h1>Информация о проекте</h1>
+    <div id="projectInfo" class="card"></div>
+    
+    <div class="nav-buttons">
+        <p>Работа с пректом:
+            <button id="updateProjectButton">Изменить проект</button>
+            <button id="confirmDelete">Удалить проект</button>
+        </p>
+        <p>Работа с чатами:
+            <button id="createChatButton">Создать чат</button> 
+        </p>
+        <p>Работа с задачами:
+            <button onclick="window.location.href='../TaskFr/get_all_tasks.html?projectId=${projectId}'">Просмотреть задачи</button>
+        </p>
+        <br>
+        <p>ID для присоединения:  <input type="text" id="joinLink" readonly>
+            <button id="copyJoinLink">Скопировать ID для присоединения</button></p>
+        
+        <br>
+        <button onclick="window.location.href='get_all_projects.html'">Назад к списку проектов</button>
+        <button onclick="window.location.href='../UserFr/get_account.html'">Вернуться в профиль</button>
+        
+    </div>
+    
+    <script>
+        const baseUrl = 'http://localhost:5194';
+        const token = localStorage.getItem('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('id');
+
+        if (!token) {
+            alert('Сначала войдите в систему');
+            window.location.href = '../UserFr/login_user.html';
+        }
+
+        document.getElementById('copyJoinLink').addEventListener('click', () => {
+        const joinLinkInput = document.getElementById('joinLink');
+        joinLinkInput.select();
+        document.execCommand('copy');
+        alert('ID скопирован: ' + joinLinkInput.value);
+    });
+
+
+        const updateProjectButton = document.getElementById('updateProjectButton');
+        if (projectId) {
+            updateProjectButton.setAttribute(
+                'onclick', 
+                `window.location.href='update_project.html?id=${projectId}'`
+            );
+        } else {
+            alert('Ошибка: ID проекта не найден');
+        }
+        const createChatButton = document.getElementById('createChatButton');
+        if (projectId) {
+            createChatButton.addEventListener('click', () => {
+                window.location.href = `../ChatFr/create_chat.html?projectId=${projectId}`;
+            });
+        } else {
+            alert('Ошибка: ID проекта не найден');
+        }
+
+
+        document.getElementById('confirmDelete').addEventListener('click', async () => {
+            if (confirm("Вы уверены, что хотите удалить этот проект? Это действие невозможно отменить!")) {
+                const response = await fetch(`${baseUrl}/projects/delete/${projectId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    alert('Проект успешно удален!');
+                    window.location.href = 'get_all_projects.html';
+                } else {
+                    const error = await response.text();
+                    alert(`Ошибка: ${error}`);
+                }
+            }
+        });
+        async function deleteChat(chatId, projectId) {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Сначала войдите в систему');
+            window.location.href = '../UserFr/login_user.html';
+            return;
+        }
+
+        if (confirm("Вы уверены, что хотите удалить этот чат? Это действие невозможно отменить!")) {
+            try {
+                const response = await fetch(`${baseUrl}/projects/${projectId}/chats/delete/${chatId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    alert('Чат успешно удален!');
+                    window.location.reload(); 
+                } else {
+                    const error = await response.text();
+                    alert(`Ошибка: ${error}`);
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении чата:', error);
+                alert('Произошла ошибка при удалении чата');
+            }
+        }
+    }
+    
+        async function loadProject() {
+            const response = await fetch(`${baseUrl}/projects/${projectId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 403) {
+                alert('У вас нет доступа к этому проекту');
+                window.location.href = 'get_all_projects.html';
+                return;
+            }
+
+
+            if (response.ok) {
+                const project = await response.json();
+                const projectInfo = document.getElementById('projectInfo');
+
+                projectInfo.innerHTML = `
+                    <h2>${project.name}</h2>
+                    <p>${project.description || 'Нет описания'}</p>
+                    <p>Создатель: ${project.ownerNickName}</p>
+                    <p>Дата создания: ${new Date(project.createdAt).toLocaleDateString()}</p>
+                    
+                    <h3>Задачи:</h3>
+                    ${project.tasks?.length > 0 ? 
+                        `<ul>${project.tasks.map(task => `
+                            <li>
+                                ${task.title} - ${task.status}
+                                <button onclick="window.location.href='../TaskFr/get_task.html?taskId=${task.id}&projectId=${projectId}'">Подробнее</button>
+
+                            </li>
+                        `).join('')}</ul>` : 
+                        '<p>Нет задач</p>'}
+                    
+                    <h3>Чаты:</h3>
+                    ${project.chats?.length > 0 ? 
+                        `<ul>${project.chats.map(chat => `<li>${chat.name}<button onclick="window.location.href='../ChatFr/chat.html?chatId=${chat.id}&projectId=${project.id}'">Войти в чат</button>
+                                                                          <button onclick="window.location.href='../ChatFr/update_chat.html?chatId=${chat.id}&projectId=${project.id}'">Изменить</button>
+                                                                          <button onclick="deleteChat('${chat.id}', '${project.id}')">Удалить</button></li>`).join('')}</ul>` : 
+                        '<p>Нет чатов</p>'
+                        }
+                `;
+
+
+                document.querySelector('button[onclick*="get_all_tasks"]')
+                    .setAttribute('onclick', `window.location.href='../TaskFr/get_all_tasks.html?projectId=${projectId}'`);
+
+
+                    document.getElementById('joinLink').value = `${projectId}`;
+            } else {
+                alert('Ошибка при загрузке проекта');
+            }
+        }
+
+        loadProject();
+    </script>
+</body>
+</html>
