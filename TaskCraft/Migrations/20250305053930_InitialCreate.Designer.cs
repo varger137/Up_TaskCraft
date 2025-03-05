@@ -12,7 +12,7 @@ using TaskCraft.DataBase;
 namespace TaskCraft.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250305050530_InitialCreate")]
+    [Migration("20250305053930_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

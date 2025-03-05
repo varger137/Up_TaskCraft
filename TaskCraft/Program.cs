@@ -260,7 +260,7 @@ app.MapGet("/projects/{id}", [Authorize] async (ProjectRepository projectReposit
 {
     var userId = Guid.Parse(ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
     
-    // Проверяем, есть ли пользователь в проекте
+
     if (!await projectRepository.IsUserInProject(id, userId))
     {
         return Results.Forbid();
