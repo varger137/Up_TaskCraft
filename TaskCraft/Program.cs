@@ -539,11 +539,11 @@ app.Map("/ws/chat/{chatId}", async context =>
 
                     await messageRepository.AddMessageAsync(messageDto);
 
-                    // Получаем информацию об отправителе
+
                     var user = await userRepository.GetUserById(userId);
                     var nickName = user?.NickName ?? "Unknown";
 
-                    // Создаем объект сообщения с текстом и никнеймом
+
                     var messageObject = new
                     {
                         Text = messageText,
@@ -553,7 +553,7 @@ app.Map("/ws/chat/{chatId}", async context =>
 
                     var messageJson = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(messageObject));
 
-                    // Отправляем сообщение всем подключенным клиентам
+
                     foreach (var socket in webSockets.Values)
                     {
                         if (socket.State == WebSocketState.Open)
