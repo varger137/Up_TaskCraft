@@ -10,11 +10,7 @@ namespace TaskCraft.Maps
         {
 
             CreateMap<CreateChatDTO, Chat>();
-
-
             CreateMap<UpdateChatDTO, Chat>();
-
-
             CreateMap<Chat, GetChatDTO>()
                 .ForMember(dest => dest.Messages, opt => opt.MapFrom(src => src.Messages))
                 .ForMember(dest => dest.ChatId, opt => opt.MapFrom(src => src.Id));

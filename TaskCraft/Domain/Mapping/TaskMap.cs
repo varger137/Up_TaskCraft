@@ -2,14 +2,13 @@ using AutoMapper;
 using TaskCraft.Entities;
 using TaskCraft.DTOs;
 
+namespace TaskCraft.Maps;
 public class TaskProfile : Profile
 {
     public TaskProfile()
     {
 
         CreateMap<CreateTaskDTO, TaskEntity>();
-
-
         CreateMap<UpdateTaskDTO, TaskEntity>();
 
 

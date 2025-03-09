@@ -3,14 +3,13 @@ using TaskCraft.Entities;
 using TaskCraft.DTOs;
 using System.Linq;
 
+namespace TaskCraft.Maps;
 public class UserProfile : Profile
 {
     public UserProfile()
     {
 
         CreateMap<RegisterUserDTO, User>();
-
-
         CreateMap<UpdateUserDTO, User>();
 
 

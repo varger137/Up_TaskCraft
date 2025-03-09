@@ -3,14 +3,14 @@ using TaskCraft.Entities;
 using TaskCraft.DTOs;
 using System.Linq;
 
+namespace TaskCraft.Maps;
 public class ProjectProfile : Profile
 {
     public ProjectProfile()
     {
 
         CreateMap<CreateProjectDTO, Project>();
-
-
+        
         CreateMap<UpdateProjectDTO, Project>();
 
         CreateMap<Project, GetProjectDTO>()
